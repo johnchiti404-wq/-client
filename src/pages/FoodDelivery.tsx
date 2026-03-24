@@ -122,8 +122,6 @@ export function FoodDelivery() {
   // Total = constant subtotal + variable delivery fee
   const total = foodSubtotal + deliveryFee;
 
-  const isExpanded = panelHeight > SNAP_THRESHOLD;
-
   useEffect(() => {
     if (!routeData || cart.length === 0) {
       console.log('No route data or empty cart, redirecting to shop');
