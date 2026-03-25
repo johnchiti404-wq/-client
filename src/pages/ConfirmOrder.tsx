@@ -361,20 +361,38 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
       </motion.div>
 
       <motion.div
-        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl p-6 z-20 max-h-[80vh] overflow-y-auto"
+        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-20 max-h-[80vh] flex flex-col"
         initial={{ y: 200, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.2 }}
       >
-        <div className="space-y-6">
+        {/* STATIC TOP SECTION - Vehicle/Delivery Mode Header */}
+        <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-100">
+          {isService ? (
+            <div className="text-center">
+              <h2 className="text-xl font-bold text-gray-900">{getServiceLabel()}</h2>
+              <p className="text-gray-600 text-sm">{vehicle?.description}</p>
+              <p className="text-xs text-gray-500 mt-1">{vehicle?.eta}</p>
+            </div>
+          ) : isDeliveryOrFood ? (
+            <div className="flex items-center justify-center space-x-3">
+              <span className="text-gray-900 font-semibold">{orderData.deliveryMode?.label || 'Standard Delivery'}</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-600 text-sm">{orderData.deliveryMode?.time || '20 min'}</span>
+            </div>
+          ) : (
+            <div className="flex items-center justify-center space-x-3">
+              <span className="text-gray-900 font-semibold">{finalCarType}</span>
+              <span className="text-gray-400">|</span>
+              <span className="text-gray-600 text-sm">Standard Ride</span>
+            </div>
+          )}
+        </div>
+
+        {/* SCROLLABLE MIDDLE SECTION - Order Details */}
+        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
           {isService ? (
             <>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{getServiceLabel()}</h2>
-                <p className="text-gray-600">{vehicle?.description}</p>
-                <p className="text-sm text-gray-500">{vehicle?.eta}</p>
-              </div>
-
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Service Details</h3>
                 <div className="space-y-2 text-sm">
@@ -407,12 +425,6 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
             </>
           ) : isDelivery ? (
             <>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{orderData.deliveryMode?.label}</h2>
-                <p className="text-gray-600">{orderData.deliveryMode?.description}</p>
-                <p className="text-sm text-gray-500">{orderData.deliveryMode?.time}</p>
-              </div>
-
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Delivery Details</h3>
                 <div className="space-y-2 text-sm">
@@ -440,7 +452,7 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
               {orderData.items && orderData.items.length > 0 && (
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-semibold text-gray-900 mb-3">Items ({orderData.items.length})</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                  <div className="space-y-2">
                     {orderData.items.map((item: any, idx: number) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <span className="text-gray-700">{item.name}</span>
@@ -469,12 +481,6 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
             </>
           ) : isFood ? (
             <>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900 mb-2">{orderData.deliveryMode?.label}</h2>
-                <p className="text-gray-600">{orderData.deliveryMode?.description}</p>
-                <p className="text-sm text-gray-500">{orderData.deliveryMode?.time}</p>
-              </div>
-
               <div className="bg-gray-50 rounded-xl p-4">
                 <h3 className="font-semibold text-gray-900 mb-3">Delivery Details</h3>
                 <div className="space-y-2 text-sm">
@@ -498,7 +504,7 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
               {orderData.items && orderData.items.length > 0 && (
                 <div className="bg-gray-50 rounded-xl p-4">
                   <h3 className="font-semibold text-gray-900 mb-3">Food Items</h3>
-                  <div className="space-y-2 max-h-32 overflow-y-auto">
+                  <div className="space-y-2">
                     {orderData.items.map((item: any, idx: number) => (
                       <div key={idx} className="flex justify-between text-sm">
                         <span className="text-gray-700">{item.name}</span>
@@ -527,33 +533,41 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
             </>
           ) : (
             <>
-              <div className="text-center">
-                <h2 className="text-2xl font-bold text-gray-900">{finalDestination}</h2>
-                {finalStops.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-sm text-gray-600">via {finalStops.length} stop{finalStops.length > 1 ? 's' : ''}</p>
-                    <div className="text-xs text-gray-500 mt-1">
-                      {finalStops.map((stop, index) => (
-                        <span key={index}>
-                          {stop}{index < finalStops.length - 1 ? ' → ' : ''}
-                        </span>
-                      ))}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <h3 className="font-semibold text-gray-900 mb-3">Ride Details</h3>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-600">Destination:</span>
+                    <span className="text-gray-900 font-medium text-right max-w-[200px] truncate">{finalDestination}</span>
+                  </div>
+                  {finalStops.length > 0 && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Stops:</span>
+                      <span className="text-gray-900 font-medium">{finalStops.length}</span>
                     </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-center space-x-4 mt-4">
-                  <span className="text-lg font-medium text-gray-700">{finalCarType}</span>
-                  <span className="text-2xl font-bold text-gray-900">R {displayPrice}</span>
+                  )}
+                  {priceCalculation && (
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Distance:</span>
+                      <span className="text-gray-900 font-medium">{priceCalculation.totalDistance}km</span>
+                    </div>
+                  )}
                 </div>
-                {priceCalculation && (
-                  <div className="text-sm text-gray-500 mt-2">
-                    {priceCalculation.totalDistance}km total distance
-                  </div>
-                )}
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <h3 className="font-semibold text-gray-900 mb-3">Pricing</h3>
+                <div className="flex justify-between pt-2 border-t border-gray-200">
+                  <span className="font-semibold text-gray-900">Total</span>
+                  <span className="text-lg font-bold text-gray-900">R {displayPrice}</span>
+                </div>
               </div>
             </>
           )}
+        </div>
 
+        {/* STATIC BOTTOM SECTION - Confirm Button (always visible) */}
+        <div className="flex-shrink-0 px-6 py-4 border-t border-gray-100 bg-white">
           <motion.button
             onClick={handleConfirmOrder}
             disabled={isLoading || isRideActive}

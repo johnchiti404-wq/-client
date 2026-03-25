@@ -143,11 +143,12 @@ export const OrderTrackingPage: React.FC = () => {
   );
 
   // Determine current stage for rotating messages
+  // When status is "ready_for_pickup", show ready message instead of preparing
   const currentStage = orderData.driverStatus === 'searching' 
     ? 'searching' 
-    : (orderData.status === 'accepted' && !preparingShown) 
-      ? 'preparing' 
-      : orderData.status === 'accepted' 
+    : orderData.status === 'ready_for_pickup'
+      ? 'ready'
+      : (orderData.status === 'accepted') 
         ? 'preparing' 
         : null;
 
@@ -186,30 +187,23 @@ export const OrderTrackingPage: React.FC = () => {
     };
   }, [orderData.status, preparingShown]);
 
-  // Handle transition to LiveTrackingPage when driverStatus becomes "searching"
+  // Handle transition to LiveTrackingPage
+  // IMPORTANT: Do NOT transition when driverStatus === 'searching'
+  // Only transition when BOTH status === 'driver_assigned' AND driverStatus === 'assigned'
   useEffect(() => {
-    if (orderData.driverStatus === 'searching') {
-      // Clear any existing timeout
-      if (transitionDelayRef.current) {
-        clearTimeout(transitionDelayRef.current);
-      }
-      // After 3 seconds, transition to live tracking
-      transitionDelayRef.current = setTimeout(() => {
-        navigate('/live-tracking', {
-          state: {
-            orderId,
-            orderData: { ...orderData, id: orderId },
-          },
-          replace: true,
-        });
-      }, 3000);
-    }
+    // When driverStatus is 'searching', just mark UI as active - do NOT transition
+    // The user must stay on this page to see "Assigning Driver" step
+    
+    // Only transition when driver is fully assigned
+    const shouldTransition = 
+      (orderData.status === 'driver_assigned' && orderData.driverStatus === 'assigned') ||
+      (orderData.driverId && orderData.driverStatus === 'assigned');
 
-    // Also transition immediately if driver is assigned
-    if (orderData.status === 'driver_assigned' || orderData.driverStatus === 'assigned' || orderData.driverId) {
+    if (shouldTransition) {
       if (transitionDelayRef.current) {
         clearTimeout(transitionDelayRef.current);
       }
+      // Small delay to show "Driver Assigned" step before transitioning
       transitionDelayRef.current = setTimeout(() => {
         navigate('/live-tracking', {
           state: {
@@ -228,8 +222,23 @@ export const OrderTrackingPage: React.FC = () => {
     };
   }, [orderData.driverStatus, orderData.status, orderData.driverId, orderId, navigate, orderData]);
 
+  // Get ready for pickup message based on item count
+  const getReadyMessage = () => {
+    const itemCount = orderData.items?.length || 0;
+    if (itemCount === 1) {
+      return "Your item is ready and will soon be picked up from the store.";
+    }
+    return "Your items are ready and will soon be picked up from the store.";
+  };
+
   // Rotate status messages every 3-4 seconds
   useEffect(() => {
+    // For ready_for_pickup, show a single static message (no rotation)
+    if (currentStage === 'ready') {
+      setRotatingMessage(getReadyMessage());
+      return;
+    }
+
     const messages = currentStage === 'searching' ? searchingMessages : preparingMessages;
     
     if (currentStage) {
@@ -249,7 +258,7 @@ export const OrderTrackingPage: React.FC = () => {
         clearInterval(messageRotationRef.current);
       }
     };
-  }, [currentStage]);
+  }, [currentStage, orderData.items]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
