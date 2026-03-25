@@ -568,7 +568,7 @@ export const LiveTrackingPage: React.FC = () => {
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,
         }}
-        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-20"
+        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-20 flex flex-col"
       >
         {/* Panel Handle - draggable area */}
         <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
@@ -716,6 +716,21 @@ export const LiveTrackingPage: React.FC = () => {
               ))}
             </div>
           )}
+
+          {/* Delivery Address */}
+          <div className="mt-4 pt-4 border-t border-gray-100">
+            <div className="flex items-start space-x-3">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                <MapPin size={16} className="text-blue-600" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-xs text-gray-500 uppercase tracking-wide">Delivery Address</p>
+                <p className="text-gray-900 text-sm mt-0.5">
+                  {orderData.destinationAddress || 'Address not specified'}
+                </p>
+              </div>
+            </div>
+          </div>
         </div>
       </motion.div>
 
