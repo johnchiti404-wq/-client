@@ -555,22 +555,7 @@ export const LiveTrackingPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Fixed Delivery Address Panel - stays at bottom */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 p-4 z-10">
-        <div className="flex items-start space-x-3">
-          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-            <MapPin size={16} className="text-blue-600" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs text-gray-500 uppercase tracking-wide">Delivery Address</p>
-            <p className="text-gray-900 text-sm mt-0.5 truncate">
-              {orderData.destinationAddress || 'Address not specified'}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* Draggable Bottom Panel */}
+      {/* Draggable Bottom Panel - anchored to bottom edge (no gap) */}
       <motion.div
         ref={panelRef}
         drag="y"
@@ -583,28 +568,20 @@ export const LiveTrackingPage: React.FC = () => {
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,
         }}
-        className="fixed left-0 right-0 bg-white shadow-2xl z-20"
-        initial={{ bottom: 60 }}
-        animate={{ bottom: 60 }}
+        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-20"
       >
-        {/* Panel Handle */}
+        {/* Panel Handle - draggable area */}
         <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
           <div className="w-10 h-1.5 bg-gray-300 rounded-full shadow-sm" />
         </div>
 
-        {/* Panel Content */}
-        <div
-          ref={contentRef}
-          onScroll={handleScroll}
-          className="px-4 pb-4 overflow-y-auto"
-          style={{ maxHeight: 'calc(100% - 24px)' }}
-        >
-          {/* Driver Card */}
+        {/* STATIC Driver Info Header - does not scroll */}
+        <div className="flex-shrink-0 px-4 pb-3 border-b border-gray-100">
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: 0.3 }}
-            className="flex items-center justify-between py-3 border-b border-gray-100"
+            className="flex items-center justify-between"
           >
             <div className="flex items-center space-x-3">
               {/* Driver Photo */}
@@ -658,7 +635,15 @@ export const LiveTrackingPage: React.FC = () => {
               </motion.button>
             </div>
           </motion.div>
+        </div>
 
+        {/* SCROLLABLE Panel Content - only this section scrolls */}
+        <div
+          ref={contentRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-4 pb-4"
+          style={{ maxHeight: 'calc(100% - 90px)' }}
+        >
           {/* Order Items List */}
           <div className="mt-4">
             <h4 className="text-sm font-semibold text-gray-700 mb-3">Order Items</h4>

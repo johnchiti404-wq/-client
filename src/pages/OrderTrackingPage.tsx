@@ -51,6 +51,19 @@ const searchingMessages = [
   "Connecting to a delivery partner...",
 ];
 
+// Ready for pickup messages (will be dynamically adjusted based on item count)
+const readyMessagesSingle = [
+  "Your item is ready and will soon be picked up from the store.",
+  "Your order is packed and waiting for pickup.",
+  "Almost there! Driver is being assigned.",
+];
+
+const readyMessagesMultiple = [
+  "Your items are ready and will soon be picked up from the store.",
+  "Your order is packed and waiting for pickup.",
+  "Almost there! Driver is being assigned.",
+];
+
 // Determine which steps are completed based on Firestore status and driverStatus
 const getCompletedSteps = (
   status: string,
@@ -222,36 +235,36 @@ export const OrderTrackingPage: React.FC = () => {
     };
   }, [orderData.driverStatus, orderData.status, orderData.driverId, orderId, navigate, orderData]);
 
-  // Get ready for pickup message based on item count
-  const getReadyMessage = () => {
+  // Get ready for pickup messages based on item count
+  const getReadyMessages = () => {
     const itemCount = orderData.items?.length || 0;
-    if (itemCount === 1) {
-      return "Your item is ready and will soon be picked up from the store.";
-    }
-    return "Your items are ready and will soon be picked up from the store.";
+    return itemCount === 1 ? readyMessagesSingle : readyMessagesMultiple;
   };
 
-  // Rotate status messages every 3-4 seconds
+  // Rotate status messages every 3-4 seconds (now includes ready messages)
   useEffect(() => {
-    // For ready_for_pickup, show a single static message (no rotation)
-    if (currentStage === 'ready') {
-      setRotatingMessage(getReadyMessage());
+    // Determine which message array to use
+    let messages: string[];
+    if (currentStage === 'searching') {
+      messages = searchingMessages;
+    } else if (currentStage === 'ready') {
+      messages = getReadyMessages();
+    } else if (currentStage === 'preparing') {
+      messages = preparingMessages;
+    } else {
       return;
     }
-
-    const messages = currentStage === 'searching' ? searchingMessages : preparingMessages;
     
-    if (currentStage) {
-      setRotatingMessage(messages[0]);
-      
-      messageRotationRef.current = setInterval(() => {
-        setMessageIndex((prev) => {
-          const nextIndex = (prev + 1) % messages.length;
-          setRotatingMessage(messages[nextIndex]);
-          return nextIndex;
-        });
-      }, 3500);
-    }
+    setRotatingMessage(messages[0]);
+    setMessageIndex(0);
+    
+    messageRotationRef.current = setInterval(() => {
+      setMessageIndex((prev) => {
+        const nextIndex = (prev + 1) % messages.length;
+        setRotatingMessage(messages[nextIndex]);
+        return nextIndex;
+      });
+    }, 3500);
 
     return () => {
       if (messageRotationRef.current) {

@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { motion, AnimatePresence, useMotionValue, useTransform, animate, PanInfo } from 'framer-motion';
 import { ArrowLeft } from 'lucide-react';
 import { MapBackground } from '../components/MapBackground';
 import { useFirebaseRide } from '../hooks/useFirebaseRide';
@@ -10,6 +10,13 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { database, auth, db } from '../config/firebase';
 import { ref, push, set } from 'firebase/database';
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+
+// Panel snap positions (percentage of viewport height)
+const PANEL_COLLAPSED = 30; // vh - shows header and minimal content
+const PANEL_HALF = 50; // vh - shows most content
+const PANEL_EXPANDED = 80; // vh - fully expanded
+
+const SNAP_THRESHOLD = 40; // vh threshold for snapping
 
 interface UserLocation {
   lat: number | null;
@@ -44,6 +51,70 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
   const { profile } = useUserProfile();
   const { createRide } = useFirebaseRide();
   const { isRideActive } = useRideContext();
+
+  // Panel drag state
+  const panelHeight = useMotionValue(PANEL_HALF);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [canDrag, setCanDrag] = useState(true);
+
+  // Transform panel height to border radius
+  const borderRadius = useTransform(panelHeight, [PANEL_COLLAPSED, PANEL_EXPANDED], [24, 12]);
+
+  // Handle panel drag
+  const handlePanelDrag = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (!canDrag) return;
+    
+    const currentHeight = panelHeight.get();
+    const deltaVh = (-info.delta.y / window.innerHeight) * 100;
+    const newHeight = Math.max(PANEL_COLLAPSED, Math.min(PANEL_EXPANDED, currentHeight + deltaVh));
+    panelHeight.set(newHeight);
+  }, [canDrag, panelHeight]);
+
+  // Handle drag end - snap to nearest position
+  const handleDragEnd = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
+    if (!canDrag) return;
+
+    const currentHeight = panelHeight.get();
+    const velocity = -info.velocity.y;
+    
+    let targetHeight: number;
+    
+    // Use velocity to determine direction
+    if (Math.abs(velocity) > 500) {
+      if (velocity > 0) {
+        // Swiping up
+        targetHeight = currentHeight < PANEL_HALF ? PANEL_HALF : PANEL_EXPANDED;
+      } else {
+        // Swiping down
+        targetHeight = currentHeight > PANEL_HALF ? PANEL_HALF : PANEL_COLLAPSED;
+      }
+    } else {
+      // Snap to nearest
+      if (currentHeight < SNAP_THRESHOLD) {
+        targetHeight = PANEL_COLLAPSED;
+      } else if (currentHeight < (PANEL_HALF + PANEL_EXPANDED) / 2) {
+        targetHeight = PANEL_HALF;
+      } else {
+        targetHeight = PANEL_EXPANDED;
+      }
+    }
+
+    animate(panelHeight, targetHeight, {
+      type: 'spring',
+      stiffness: 300,
+      damping: 30,
+    });
+  }, [canDrag, panelHeight]);
+
+  // Handle scroll interaction
+  const handleScroll = useCallback(() => {
+    if (contentRef.current) {
+      const scrollTop = contentRef.current.scrollTop;
+      // Only allow panel drag when scrolled to top
+      setCanDrag(scrollTop <= 0);
+    }
+  }, []);
 
   // Get user's GPS location on component mount
   useEffect(() => {
@@ -361,13 +432,29 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
       </motion.div>
 
       <motion.div
-        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-3xl shadow-2xl z-20 max-h-[80vh] flex flex-col"
+        ref={panelRef}
+        drag="y"
+        dragConstraints={{ top: 0, bottom: 0 }}
+        dragElastic={0.1}
+        onDrag={handlePanelDrag}
+        onDragEnd={handleDragEnd}
+        style={{
+          height: useTransform(panelHeight, (v) => `${v}vh`),
+          borderTopLeftRadius: borderRadius,
+          borderTopRightRadius: borderRadius,
+        }}
+        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-20 flex flex-col"
         initial={{ y: 200, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", damping: 25, stiffness: 200, delay: 0.2 }}
       >
+        {/* Panel Handle - draggable area */}
+        <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing flex-shrink-0">
+          <div className="w-10 h-1.5 bg-gray-300 rounded-full shadow-sm" />
+        </div>
+
         {/* STATIC TOP SECTION - Vehicle/Delivery Mode Header */}
-        <div className="flex-shrink-0 px-6 pt-6 pb-4 border-b border-gray-100">
+        <div className="flex-shrink-0 px-6 pb-4 border-b border-gray-100">
           {isService ? (
             <div className="text-center">
               <h2 className="text-xl font-bold text-gray-900">{getServiceLabel()}</h2>
@@ -390,7 +477,11 @@ export const ConfirmOrder: React.FC<ConfirmOrderProps> = ({
         </div>
 
         {/* SCROLLABLE MIDDLE SECTION - Order Details */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+        <div
+          ref={contentRef}
+          onScroll={handleScroll}
+          className="flex-1 overflow-y-auto px-6 py-4 space-y-4"
+        >
           {isService ? (
             <>
               <div className="bg-gray-50 rounded-xl p-4">
