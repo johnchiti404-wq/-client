@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, MapPin, CreditCard as Edit, Phone, Share, CreditCard, X, MessageCircle } from 'lucide-react';
+import { Plus, MapPin, CreditCard as Edit, Phone, Share, CreditCard, X, MessageCircle, Navigation } from 'lucide-react';
 import { DraggablePanel } from '../components/DraggablePanel';
 import { ScrollableSection } from '../components/ScrollableSection';
 import { MapBackground } from '../components/MapBackground';
@@ -34,6 +34,7 @@ interface DriverInfo {
   carModel: string;
   eta: string;
   photo: string;
+  photoUrl?: string; // URL from Firestore drivers/{driverId}
   location: {
     latitude: number;
     longitude: number;
@@ -63,6 +64,8 @@ export const DriverComing: React.FC<DriverComingProps> = ({
   const [driverInfo, setDriverInfo] = useState<DriverInfo | null>(null);
   const [rideStatus, setRideStatus] = useState<string>('accepted');
   const [statusText, setStatusText] = useState('Finding driver...');
+  const [etaMinutes, setEtaMinutes] = useState<number | null>(null);
+  const [userCurrentLocation, setUserCurrentLocation] = useState<string>('Current location');
   const [showArrivalAlert, setShowArrivalAlert] = useState(false);
   const [hasShownArrivalAlert, setHasShownArrivalAlert] = useState(false);
   const [isMessagePanelOpen, setIsMessagePanelOpen] = useState(false);
@@ -82,14 +85,18 @@ export const DriverComing: React.FC<DriverComingProps> = ({
   const priceCalculation = !isFood ? calculatePriceWithStops(pickup, destination, stops) : null;
   const displayPrice = isFood ? finalPrice : (priceCalculation ? getCarTypePrice(priceCalculation.totalPrice, carType) : finalPrice);
 
-  // Fetch driver info
+  // Fetch driver info from Firestore
   useEffect(() => {
     const fetchDriverInfo = async () => {
       if (currentRide?.driverId) {
         try {
           const fetchedDriver = await firebaseService.getDriverInfo(currentRide.driverId);
           if (fetchedDriver) {
-            setDriverInfo(fetchedDriver);
+            // Add the photoUrl from Firestore
+            setDriverInfo({
+              ...fetchedDriver,
+              photoUrl: fetchedDriver.profileImage || fetchedDriver.photo || '',
+            });
             return;
           }
         } catch (error) {
@@ -104,7 +111,8 @@ export const DriverComing: React.FC<DriverComingProps> = ({
         plateNumber: 'KW14CKGP',
         carModel: 'Silver • Honda Amaze',
         eta: '',
-        photo: '👨🏽‍💼',
+        photo: '',
+        photoUrl: '',
         location: { latitude: -26.2041, longitude: 28.0473 }
       };
       setDriverInfo(fallbackDriverInfo);
@@ -173,23 +181,26 @@ export const DriverComing: React.FC<DriverComingProps> = ({
           if (currentStatus === 'accepted' || currentStatus === 'arrived') {
             // Target = pickup location
             const pickupCoords = order.pickupLocation || { latitude: -26.2041, longitude: 28.0473 };
-            const etaMinutes = calculateETA(driverLoc, pickupCoords);
+            const eta = calculateETA(driverLoc, pickupCoords);
+            setEtaMinutes(eta);
 
             if (currentStatus === 'accepted') {
-              setStatusText(`Arriving in ${etaMinutes} min${etaMinutes !== 1 ? 's' : ''}`);
+              setStatusText('Driver accepted');
             }
           } else if (currentStatus === 'started') {
             // Target = destination location
             const destinationCoords = order.destinationLocation || { latitude: -26.195, longitude: 28.04 };
-            const etaMinutes = calculateETA(driverLoc, destinationCoords);
-            setStatusText(`On trip — ETA ${etaMinutes} min${etaMinutes !== 1 ? 's' : ''}`);
+            const eta = calculateETA(driverLoc, destinationCoords);
+            setEtaMinutes(eta);
+            setStatusText('Trip started');
           }
         });
       }
 
       // Update status text for arrived (freeze ETA)
       if (newStatus === 'arrived') {
-        setStatusText('Your driver has arrived');
+        setStatusText('Driver arrived');
+        setEtaMinutes(0);
       }
 
       // Status text for started is handled by GPS listener above
@@ -293,16 +304,41 @@ export const DriverComing: React.FC<DriverComingProps> = ({
 
       <DraggablePanel initialHeight={500} maxHeight={680} minHeight={175}>
         <div className="space-y-6 pb-6">
-          <motion.div className="text-center pt-4" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{statusText}</h2>
+          {/* Status Header with ETA on right */}
+          <motion.div 
+            className="flex items-center justify-between pt-4 px-2" 
+            initial={{ opacity: 0, y: 20 }} 
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <h2 className="text-xl font-bold text-gray-900">{statusText}</h2>
+            {etaMinutes !== null && (
+              <motion.div 
+                key={etaMinutes}
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex items-center space-x-1 bg-green-100 px-3 py-1 rounded-full"
+              >
+                <span className="text-lg font-bold text-green-700">
+                  {etaMinutes === 0 ? 'Arrived' : `${etaMinutes} min`}
+                </span>
+              </motion.div>
+            )}
           </motion.div>
 
           <motion.div className="bg-gray-50 rounded-2xl p-4" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}>
             <div className="flex items-center space-x-4">
               <div className="relative">
-                <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl">
-                  {driverInfo.photo}
-                </div>
+                {driverInfo.photoUrl ? (
+                  <img 
+                    src={driverInfo.photoUrl} 
+                    alt={driverInfo.name}
+                    className="w-16 h-16 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="w-16 h-16 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl text-white font-bold">
+                    {driverInfo.name?.charAt(0) || '?'}
+                  </div>
+                )}
               </div>
               <div className="flex-1">
                 <h3 className="font-bold text-lg text-gray-900">{driverInfo.plateNumber}</h3>
@@ -417,31 +453,45 @@ export const DriverComing: React.FC<DriverComingProps> = ({
                 </>
               ) : (
                 <>
-                  {/* Ride Details */}
+                  {/* Ride Details - My Route Section */}
                   <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
                     <h3 className="font-semibold text-gray-900 mb-3">My route</h3>
-                    <div className="space-y-3">
+                    {/* Scrollable route section */}
+                    <div className="max-h-[200px] overflow-y-auto space-y-3 pr-2">
+                      {/* Current Location (User's location) */}
+                      <div className="flex items-center space-x-3">
+                        <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse"></div>
+                        <Navigation size={14} className="text-blue-500" />
+                        <span className="flex-1 text-gray-700 text-sm">{userCurrentLocation}</span>
+                      </div>
+
+                      {/* Pickup Location */}
                       <div className="flex items-center space-x-3">
                         <div className="w-3 h-3 bg-green-500 rounded-full"></div>
                         <span className="flex-1 text-gray-700">{pickup}</span>
                         <Edit className="text-gray-400" size={16} />
                       </div>
 
-                      {stops.map((stop, index) => (
-                        <div key={index} className="flex items-center space-x-3 ml-6">
-                          <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
-                          <span className="flex-1 text-gray-700">{stop}</span>
-                          <Edit className="text-gray-400" size={16} />
-                        </div>
-                      ))}
-
+                      {/* Add Stop Button */}
                       <div className="flex items-center space-x-3 ml-6">
                         <Plus className="text-blue-600" size={16} />
                         <span className="text-blue-600 font-medium">Add stop</span>
                       </div>
 
+                      {/* Existing Stops */}
+                      {stops.map((stop, index) => (
+                        <div key={index} className="flex items-center space-x-3 ml-6">
+                          <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span className="text-xs font-bold text-orange-600">{index + 1}</span>
+                          </div>
+                          <span className="flex-1 text-gray-700">{stop}</span>
+                          <Edit className="text-gray-400" size={16} />
+                        </div>
+                      ))}
+
+                      {/* Destination */}
                       <div className="flex items-center space-x-3">
-                        <MapPin className="text-blue-600" size={12} />
+                        <MapPin className="text-red-500" size={16} />
                         <span className="flex-1 text-gray-700">{destination}</span>
                         <Edit className="text-gray-400" size={16} />
                       </div>
@@ -542,7 +592,8 @@ export const DriverComing: React.FC<DriverComingProps> = ({
         isOpen={isRatingModalOpen}
         onClose={() => {}}
         driverName={driverInfo.name}
-        driverPhoto={driverInfo.photo}
+        driverPhoto={driverInfo.photo || ''}
+        driverPhotoUrl={driverInfo.photoUrl}
         onSubmitRating={handleSubmitRating}
       />
     </div>

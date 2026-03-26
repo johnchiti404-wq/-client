@@ -566,13 +566,12 @@ export const LiveTrackingPage: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* STATIC Destination Panel - Fixed above the draggable panel */}
+      {/* STATIC Destination Panel - Fixed at screen bottom edge, z-30 so draggable panel slides behind */}
       <motion.div
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: 'spring', damping: 25, stiffness: 200, delay: 0.3 }}
-        className="fixed left-4 right-4 bg-white rounded-2xl shadow-lg z-30 p-4"
-        style={{ bottom: 'calc(15vh + 16px)' }} // Position above the collapsed panel
+        className="fixed bottom-0 left-0 right-0 bg-white rounded-t-2xl shadow-lg z-30 p-4 pb-6"
       >
         {/* Delivery Address */}
         <div className="flex items-start space-x-3">
@@ -605,7 +604,7 @@ export const LiveTrackingPage: React.FC = () => {
         )}
       </motion.div>
 
-      {/* Draggable Bottom Panel - anchored to bottom edge (no gap) */}
+      {/* Draggable Bottom Panel - slides behind the static destination panel (z-20 < z-30) */}
       <motion.div
         ref={panelRef}
         drag="y"
@@ -617,8 +616,9 @@ export const LiveTrackingPage: React.FC = () => {
           height: useTransform(panelHeight, (v) => `${v}vh`),
           borderTopLeftRadius: borderRadius,
           borderTopRightRadius: borderRadius,
+          bottom: '80px', // Positioned above the static destination panel
         }}
-        className="fixed bottom-0 left-0 right-0 bg-white shadow-2xl z-20 flex flex-col"
+        className="fixed left-0 right-0 bg-white shadow-2xl z-20 flex flex-col"
       >
         {/* Panel Handle - draggable area */}
         <div className="flex justify-center pt-3 pb-2 cursor-grab active:cursor-grabbing">
@@ -779,14 +779,14 @@ export const LiveTrackingPage: React.FC = () => {
               className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
             />
 
-            {/* Rating Panel */}
+            {/* Rating Panel - Reduced height to ensure button visibility */}
             <motion.div
               initial={{ opacity: 0, y: 100 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-x-4 bottom-4 top-auto bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
-              style={{ maxHeight: '85vh' }}
+              style={{ maxHeight: '75vh' }}
             >
               {ratingStep === 'store' ? (
                 /* Store Rating Panel - Fixed layout structure */
