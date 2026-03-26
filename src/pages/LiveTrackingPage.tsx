@@ -786,7 +786,7 @@ export const LiveTrackingPage: React.FC = () => {
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-x-4 bottom-4 top-auto bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
-              style={{ maxHeight: '50vh' }}
+              style={{ maxHeight: '20vh' }}
             >
               {ratingStep === 'store' ? (
                 <div className="flex flex-col h-full">
