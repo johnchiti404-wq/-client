@@ -789,7 +789,6 @@ export const LiveTrackingPage: React.FC = () => {
               style={{ maxHeight: '75vh' }}
             >
               {ratingStep === 'store' ? (
-                /* Store Rating Panel - Fixed layout structure */
                 <div className="flex flex-col h-full">
                   {/* FIXED HEADER */}
                   <div className="flex-shrink-0 p-6 pb-4">
@@ -906,7 +905,6 @@ export const LiveTrackingPage: React.FC = () => {
                   </div>
                 </div>
               ) : (
-                /* Driver Rating Panel - Fixed layout structure */
                 <div className="flex flex-col h-full">
                   {/* FIXED HEADER */}
                   <div className="flex-shrink-0 p-6 pb-4">
