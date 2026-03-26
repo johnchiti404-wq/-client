@@ -19,7 +19,10 @@ interface DriverData {
   rating: number;
   reviewCount?: number;
   vehicleType: string;
+  vehicleColor?: string;
   plateNumber: string;
+  bicycleType?: string;
+  bicycleColor?: string;
   phone: string;
   photo?: string;
   profileImage?: string;
@@ -30,6 +33,7 @@ interface StoreData {
   rating: number;
   reviewCount?: number;
   image?: string;
+  logo?: string;
 }
 
 interface DriverLocation {
@@ -209,14 +213,17 @@ export const LiveTrackingPage: React.FC = () => {
             if (driverSnap.exists()) {
               const dData = driverSnap.data();
               setDriverData({
-                name: dData.name || 'Driver',
+                name: dData.name || '',
                 rating: dData.rating || 0,
                 reviewCount: dData.reviewCount || 0,
-                vehicleType: dData.vehicleType || 'Vehicle',
-                plateNumber: dData.plateNumber || 'Unknown',
+                vehicleType: dData.vehicleType || '',
+                vehicleColor: dData.vehicleColor || dData.color || '',
+                plateNumber: dData.plateNumber || dData.numberPlate || '',
+                bicycleType: dData.bicycleType || '',
+                bicycleColor: dData.bicycleColor || '',
                 phone: dData.phone || '',
-                photo: dData.photo || dData.profileImage,
-                profileImage: dData.profileImage,
+                photo: dData.photo || dData.profileImage || '',
+                profileImage: dData.profileImage || '',
               });
             }
           } catch (error) {
@@ -236,6 +243,7 @@ export const LiveTrackingPage: React.FC = () => {
                 rating: sData.rating || 0,
                 reviewCount: sData.reviewCount || 0,
                 image: sData.image || sData.profileImage,
+                logo: sData.logo, // Fetch store logo
               });
             }
           } catch (error) {
@@ -274,14 +282,17 @@ export const LiveTrackingPage: React.FC = () => {
         }
         // Update driver data
         setDriverData({
-          name: data.name || 'Driver',
+          name: data.name || '',
           rating: data.rating || 0,
           reviewCount: data.reviewCount || 0,
-          vehicleType: data.vehicleType || data.carModel || 'Vehicle',
-          plateNumber: data.plateNumber || 'Unknown',
+          vehicleType: data.vehicleType || data.carModel || '',
+          vehicleColor: data.vehicleColor || data.color || '',
+          plateNumber: data.plateNumber || data.numberPlate || '',
+          bicycleType: data.bicycleType || '',
+          bicycleColor: data.bicycleColor || '',
           phone: data.phone || '',
-          photo: data.photo || data.profileImage,
-          profileImage: data.profileImage,
+          photo: data.photo || data.profileImage || '',
+          profileImage: data.profileImage || '',
         });
       }
     });
@@ -555,6 +566,45 @@ export const LiveTrackingPage: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* STATIC Destination Panel - Fixed above the draggable panel */}
+      <motion.div
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: 'spring', damping: 25, stiffness: 200, delay: 0.3 }}
+        className="fixed left-4 right-4 bg-white rounded-2xl shadow-lg z-30 p-4"
+        style={{ bottom: 'calc(15vh + 16px)' }} // Position above the collapsed panel
+      >
+        {/* Delivery Address */}
+        <div className="flex items-start space-x-3">
+          <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+            <MapPin size={20} className="text-green-600" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium">Delivery Address</p>
+            <p className="text-gray-900 text-sm font-medium mt-0.5">
+              {orderData.destinationAddress || 'Address not specified'}
+            </p>
+          </div>
+        </div>
+
+        {/* Additional Stops */}
+        {orderData.stops && orderData.stops.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-gray-100">
+            <p className="text-xs text-gray-500 uppercase tracking-wide font-medium mb-2">Stops</p>
+            <div className="space-y-2">
+              {orderData.stops.map((stop, index) => (
+                <div key={index} className="flex items-center space-x-2">
+                  <div className="w-6 h-6 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-xs font-bold text-orange-600">{index + 1}</span>
+                  </div>
+                  <p className="text-gray-700 text-sm truncate">{stop.address}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </motion.div>
+
       {/* Draggable Bottom Panel - anchored to bottom edge (no gap) */}
       <motion.div
         ref={panelRef}
@@ -589,7 +639,7 @@ export const LiveTrackingPage: React.FC = () => {
                 {driverData?.photo || driverData?.profileImage ? (
                   <img
                     src={driverData.photo || driverData.profileImage}
-                    alt={driverData.name}
+                    alt={driverData?.name || 'Driver'}
                     className="w-12 h-12 rounded-full object-cover"
                   />
                 ) : (
@@ -603,16 +653,31 @@ export const LiveTrackingPage: React.FC = () => {
               <div className="flex-1">
                 <div className="flex items-center space-x-2">
                   <h3 className="font-bold text-base text-gray-900">{driverData?.name || 'Driver'}</h3>
-                  {/* Vehicle icon */}
-                  <span className="text-gray-400">
-                    <Navigation size={16} />
-                  </span>
+                  {driverData?.rating ? (
+                    <div className="flex items-center space-x-1">
+                      <Star size={12} className="text-amber-500 fill-amber-500" />
+                      <span className="text-xs font-medium text-gray-600">
+                        {driverData.rating.toFixed(1)}
+                      </span>
+                    </div>
+                  ) : null}
                 </div>
-                <div className="flex items-center space-x-1 mt-0.5">
-                  <Star size={12} className="text-amber-500 fill-amber-500" />
-                  <span className="text-xs font-medium text-gray-600">
-                    {driverData?.rating?.toFixed(1) || '0.0'}
-                  </span>
+                {/* Vehicle Details */}
+                <div className="text-xs text-gray-500 mt-0.5">
+                  {driverData?.vehicleType === 'bicycle' || driverData?.bicycleType ? (
+                    // Bicycle details
+                    <span>
+                      {driverData.bicycleType || 'Bicycle'}
+                      {driverData.bicycleColor ? ` - ${driverData.bicycleColor}` : ''}
+                    </span>
+                  ) : (
+                    // Car/Motorcycle details
+                    <span>
+                      {driverData?.vehicleType || ''}
+                      {driverData?.vehicleColor ? ` - ${driverData.vehicleColor}` : ''}
+                      {driverData?.plateNumber ? ` | ${driverData.plateNumber}` : ''}
+                    </span>
+                  )}
                 </div>
               </div>
             </div>
@@ -699,38 +764,6 @@ export const LiveTrackingPage: React.FC = () => {
             </div>
           </div>
 
-          {/* Stops if any */}
-          {orderData.stops && orderData.stops.length > 0 && (
-            <div className="mt-4 pt-4 border-t border-gray-100">
-              <h4 className="text-sm font-semibold text-gray-700 mb-2">Delivery Stops</h4>
-              {orderData.stops.map((stop, index) => (
-                <div
-                  key={index}
-                  className="flex items-center space-x-3 bg-orange-50 rounded-xl p-3 mb-2"
-                >
-                  <div className="w-6 h-6 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-xs font-bold text-orange-700">{index + 1}</span>
-                  </div>
-                  <p className="text-gray-700 text-sm">{stop.address}</p>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* Delivery Address */}
-          <div className="mt-4 pt-4 border-t border-gray-100">
-            <div className="flex items-start space-x-3">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <MapPin size={16} className="text-blue-600" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Delivery Address</p>
-                <p className="text-gray-900 text-sm mt-0.5">
-                  {orderData.destinationAddress || 'Address not specified'}
-                </p>
-              </div>
-            </div>
-          </div>
         </div>
       </motion.div>
 
@@ -756,218 +789,238 @@ export const LiveTrackingPage: React.FC = () => {
               style={{ maxHeight: '85vh' }}
             >
               {ratingStep === 'store' ? (
-                /* Store Rating Panel */
-                <div className="p-6 flex flex-col h-full">
-                  <p className="text-center text-gray-500 text-sm mb-4">Rate your store experience</p>
-                  
-                  {/* Store Info */}
-                  <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
-                    {storeData?.image || orderData.storeImage ? (
-                      <img
-                        src={storeData?.image || orderData.storeImage}
-                        alt={storeData?.name || orderData.storeName}
-                        className="w-12 h-12 rounded-xl object-cover"
-                      />
-                    ) : (
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-xl">
-                        <Package size={24} className="text-white" />
+                /* Store Rating Panel - Fixed layout structure */}
+                <div className="flex flex-col h-full">
+                  {/* FIXED HEADER */}
+                  <div className="flex-shrink-0 p-6 pb-4">
+                    <p className="text-center text-gray-500 text-sm mb-4">Rate your store experience</p>
+                    
+                    {/* Store Info */}
+                    <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
+                      {storeData?.logo || storeData?.image || orderData.storeImage ? (
+                        <img
+                          src={storeData?.logo || storeData?.image || orderData.storeImage}
+                          alt={storeData?.name || orderData.storeName}
+                          className="w-12 h-12 rounded-xl object-cover"
+                        />
+                      ) : (
+                        <div className="w-12 h-12 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl flex items-center justify-center text-xl">
+                          <Package size={24} className="text-white" />
+                        </div>
+                      )}
+                      <h3 className="font-bold text-lg text-gray-900">
+                        {storeData?.name || orderData.storeName || 'Store'}
+                      </h3>
+                    </div>
+
+                    {/* Stars + Emoji Section - Fixed height */}
+                    <div className="py-4 text-center">
+                      <h2 className="text-xl font-bold text-gray-900 mb-4">
+                        How was your experience with the store?
+                      </h2>
+                      
+                      {/* Stars */}
+                      <div className="flex justify-center space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <motion.button
+                            key={star}
+                            onClick={() => setStoreRating(star)}
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.1 }}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              size={40}
+                              className={`transition-colors ${
+                                star <= storeRating
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </motion.button>
+                        ))}
                       </div>
-                    )}
-                    <h3 className="font-bold text-lg text-gray-900">
-                      {storeData?.name || orderData.storeName || 'Store'}
-                    </h3>
+                      
+                      {/* Emoji feedback - Fixed height container to prevent layout shift */}
+                      <div className="h-12 flex items-center justify-center mt-2">
+                        {storeRating > 0 && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="text-4xl"
+                          >
+                            {getRatingEmoji(storeRating)}
+                          </motion.div>
+                        )}
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Rating Question */}
-                  <div className="py-6 text-center">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
-                      How was your experience with the store?
-                    </h2>
-                    
-                    {/* Stars */}
-                    <div className="flex justify-center space-x-2 mb-3">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <motion.button
-                          key={star}
-                          onClick={() => setStoreRating(star)}
-                          whileTap={{ scale: 0.9 }}
-                          whileHover={{ scale: 1.1 }}
-                          className="focus:outline-none"
+                  {/* SCROLLABLE MIDDLE SECTION */}
+                  <div className="flex-1 overflow-y-auto px-6">
+                    {/* Comment Field */}
+                    <div className="mb-4">
+                      <input
+                        type="text"
+                        value={storeComment}
+                        onChange={(e) => setStoreComment(e.target.value)}
+                        placeholder="Leave a note about the store (optional)"
+                        className="w-full px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    {/* Chips */}
+                    <div className="flex flex-wrap gap-2">
+                      {storeChips.map((chip) => (
+                        <button
+                          key={chip}
+                          onClick={() => toggleChip(chip, 'store')}
+                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                            selectedStoreChips.includes(chip)
+                              ? 'bg-blue-500 text-white border-blue-500'
+                              : 'bg-white text-gray-700 border-gray-300'
+                          }`}
                         >
-                          <Star
-                            size={40}
-                            className={`transition-colors ${
-                              star <= storeRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        </motion.button>
+                          {selectedStoreChips.includes(chip) && (
+                            <span className="inline-block w-2 h-2 bg-white rounded-full mr-2" />
+                          )}
+                          {chip}
+                        </button>
                       ))}
                     </div>
-                    
-                    {/* Emoji feedback */}
-                    {storeRating > 0 && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="text-4xl mb-4"
-                      >
-                        {getRatingEmoji(storeRating)}
-                      </motion.div>
-                    )}
                   </div>
 
-                  {/* Comment Field */}
-                  <div className="mb-4">
-                    <input
-                      type="text"
-                      value={storeComment}
-                      onChange={(e) => setStoreComment(e.target.value)}
-                      placeholder="Leave a note about the store (optional)"
-                      className="w-full px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                  {/* FIXED BOTTOM BUTTON */}
+                  <div className="flex-shrink-0 p-6 pt-4">
+                    <button
+                      onClick={handleStoreRatingNext}
+                      disabled={storeRating === 0 || isSubmitting}
+                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
+                        storeRating === 0 || isSubmitting
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg'
+                      }`}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Next'}
+                    </button>
                   </div>
-
-                  {/* Chips */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {storeChips.map((chip) => (
-                      <button
-                        key={chip}
-                        onClick={() => toggleChip(chip, 'store')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                          selectedStoreChips.includes(chip)
-                            ? 'bg-blue-500 text-white border-blue-500'
-                            : 'bg-white text-gray-700 border-gray-300'
-                        }`}
-                      >
-                        {selectedStoreChips.includes(chip) && (
-                          <span className="inline-block w-2 h-2 bg-white rounded-full mr-2" />
-                        )}
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Next Button - Purple gradient */}
-                  <button
-                    onClick={handleStoreRatingNext}
-                    disabled={storeRating === 0 || isSubmitting}
-                    className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
-                      storeRating === 0 || isSubmitting
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg'
-                    }`}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Next'}
-                  </button>
                 </div>
               ) : (
-                /* Driver Rating Panel */
-                <div className="p-6 flex flex-col h-full">
-                  <p className="text-center text-gray-500 text-sm mb-4">Rate your delivery</p>
-                  
-                  {/* Driver Info */}
-                  <div className="flex items-center justify-center space-x-3 pb-4 border-b border-gray-100">
-                    {driverData?.photo || driverData?.profileImage ? (
-                      <img
-                        src={driverData.photo || driverData.profileImage}
-                        alt={driverData.name}
-                        className="w-14 h-14 rounded-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl font-bold text-white">
-                        {driverData?.name?.charAt(0) || '?'}
+                /* Driver Rating Panel - Fixed layout structure */
+                <div className="flex flex-col h-full">
+                  {/* FIXED HEADER */}
+                  <div className="flex-shrink-0 p-6 pb-4">
+                    <p className="text-center text-gray-500 text-sm mb-4">Rate your delivery</p>
+                    
+                    {/* Driver Info */}
+                    <div className="flex items-center justify-center space-x-3 pb-4 border-b border-gray-100">
+                      {driverData?.photo || driverData?.profileImage ? (
+                        <img
+                          src={driverData.photo || driverData.profileImage}
+                          alt={driverData?.name || 'Driver'}
+                          className="w-14 h-14 rounded-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-orange-500 rounded-full flex items-center justify-center text-2xl font-bold text-white">
+                          {driverData?.name?.charAt(0) || '?'}
+                        </div>
+                      )}
+                      <div className="flex items-center space-x-2">
+                        <h3 className="font-bold text-lg text-gray-900">
+                          {driverData?.name || 'Driver'}
+                        </h3>
+                        <Navigation size={18} className="text-gray-400" />
                       </div>
-                    )}
-                    <div className="flex items-center space-x-2">
-                      <h3 className="font-bold text-lg text-gray-900">
-                        {driverData?.name || 'Driver'}
-                      </h3>
-                      <Navigation size={18} className="text-gray-400" />
+                    </div>
+
+                    {/* Stars + Emoji Section - Fixed height */}
+                    <div className="py-4 text-center">
+                      <h2 className="text-xl font-bold text-gray-900 mb-4">
+                        How was your delivery?
+                      </h2>
+                      
+                      {/* Stars */}
+                      <div className="flex justify-center space-x-2">
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <motion.button
+                            key={star}
+                            onClick={() => setDriverRating(star)}
+                            whileTap={{ scale: 0.9 }}
+                            whileHover={{ scale: 1.1 }}
+                            className="focus:outline-none"
+                          >
+                            <Star
+                              size={40}
+                              className={`transition-colors ${
+                                star <= driverRating
+                                  ? 'fill-yellow-400 text-yellow-400'
+                                  : 'text-gray-300'
+                              }`}
+                            />
+                          </motion.button>
+                        ))}
+                      </div>
+                      
+                      {/* Emoji feedback - Fixed height container to prevent layout shift */}
+                      <div className="h-12 flex items-center justify-center mt-2">
+                        {driverRating > 0 && (
+                          <motion.div
+                            initial={{ scale: 0 }}
+                            animate={{ scale: 1 }}
+                            className="text-4xl"
+                          >
+                            {getRatingEmoji(driverRating)}
+                          </motion.div>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  {/* Rating Question */}
-                  <div className="py-6 text-center">
-                    <h2 className="text-xl font-bold text-gray-900 mb-4">
-                      How was your delivery?
-                    </h2>
-                    
-                    {/* Stars */}
-                    <div className="flex justify-center space-x-2 mb-3">
-                      {[1, 2, 3, 4, 5].map((star) => (
-                        <motion.button
-                          key={star}
-                          onClick={() => setDriverRating(star)}
-                          whileTap={{ scale: 0.9 }}
-                          whileHover={{ scale: 1.1 }}
-                          className="focus:outline-none"
+                  {/* SCROLLABLE MIDDLE SECTION */}
+                  <div className="flex-1 overflow-y-auto px-6">
+                    {/* Comment Field */}
+                    <div className="mb-4">
+                      <input
+                        type="text"
+                        value={driverComment}
+                        onChange={(e) => setDriverComment(e.target.value)}
+                        placeholder="Leave a note for the driver (optional)"
+                        className="w-full px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+                      />
+                    </div>
+
+                    {/* Chips */}
+                    <div className="flex flex-wrap gap-2">
+                      {driverChips.map((chip) => (
+                        <button
+                          key={chip}
+                          onClick={() => toggleChip(chip, 'driver')}
+                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                            selectedDriverChips.includes(chip)
+                              ? 'bg-gray-800 text-white border-gray-800'
+                              : 'bg-white text-gray-700 border-gray-300'
+                          }`}
                         >
-                          <Star
-                            size={40}
-                            className={`transition-colors ${
-                              star <= driverRating
-                                ? 'fill-yellow-400 text-yellow-400'
-                                : 'text-gray-300'
-                            }`}
-                          />
-                        </motion.button>
+                          {chip}
+                        </button>
                       ))}
                     </div>
-                    
-                    {/* Emoji feedback */}
-                    {driverRating > 0 && (
-                      <motion.div
-                        initial={{ scale: 0 }}
-                        animate={{ scale: 1 }}
-                        className="text-4xl mb-4"
-                      >
-                        {getRatingEmoji(driverRating)}
-                      </motion.div>
-                    )}
                   </div>
 
-                  {/* Comment Field */}
-                  <div className="mb-4">
-                    <input
-                      type="text"
-                      value={driverComment}
-                      onChange={(e) => setDriverComment(e.target.value)}
-                      placeholder="Leave a note for the driver (optional)"
-                      className="w-full px-4 py-3 bg-gray-100 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-                    />
+                  {/* FIXED BOTTOM BUTTON */}
+                  <div className="flex-shrink-0 p-6 pt-4">
+                    <button
+                      onClick={handleDriverRatingSubmit}
+                      disabled={driverRating === 0 || isSubmitting}
+                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
+                        driverRating === 0 || isSubmitting
+                          ? 'bg-gray-300 cursor-not-allowed'
+                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
+                      }`}
+                    >
+                      {isSubmitting ? 'Submitting...' : 'Submit Rating'}
+                    </button>
                   </div>
-
-                  {/* Chips */}
-                  <div className="flex flex-wrap gap-2 mb-6">
-                    {driverChips.map((chip) => (
-                      <button
-                        key={chip}
-                        onClick={() => toggleChip(chip, 'driver')}
-                        className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                          selectedDriverChips.includes(chip)
-                            ? 'bg-gray-800 text-white border-gray-800'
-                            : 'bg-white text-gray-700 border-gray-300'
-                        }`}
-                      >
-                        {chip}
-                      </button>
-                    ))}
-                  </div>
-
-                  {/* Submit Button - Green gradient */}
-                  <button
-                    onClick={handleDriverRatingSubmit}
-                    disabled={driverRating === 0 || isSubmitting}
-                    className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
-                      driverRating === 0 || isSubmitting
-                        ? 'bg-gray-300 cursor-not-allowed'
-                        : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
-                    }`}
-                  >
-                    {isSubmitting ? 'Submitting...' : 'Submit Rating'}
-                  </button>
                 </div>
               )}
             </motion.div>
