@@ -104,7 +104,7 @@ export const LiveTrackingPage: React.FC = () => {
   const [driverLocation, setDriverLocation] = useState<DriverLocation | null>(null);
   const [eta, setEta] = useState<string>('Calculating...');
   const [statusText, setStatusText] = useState<string>('Driver is on the way');
-  
+
   // Rating modal states
   const [showRatingModal, setShowRatingModal] = useState(false);
   const [ratingStep, setRatingStep] = useState<'store' | 'driver'>('store');
@@ -137,7 +137,7 @@ export const LiveTrackingPage: React.FC = () => {
   // Handle panel drag
   const handlePanelDrag = useCallback((_: MouseEvent | TouchEvent | PointerEvent, info: PanInfo) => {
     if (!canDrag) return;
-    
+
     const currentHeight = panelHeight.get();
     const deltaVh = (-info.delta.y / window.innerHeight) * 100;
     const newHeight = Math.max(PANEL_COLLAPSED, Math.min(PANEL_EXPANDED, currentHeight + deltaVh));
@@ -150,9 +150,9 @@ export const LiveTrackingPage: React.FC = () => {
 
     const currentHeight = panelHeight.get();
     const velocity = -info.velocity.y;
-    
+
     let targetHeight: number;
-    
+
     // Use velocity to determine direction
     if (Math.abs(velocity) > 500) {
       if (velocity > 0) {
@@ -365,22 +365,22 @@ export const LiveTrackingPage: React.FC = () => {
       if (orderData.storeId) {
         const storeRef = doc(db, 'stores', orderData.storeId);
         const storeSnap = await getDoc(storeRef);
-        
+
         if (storeSnap.exists()) {
           const currentData = storeSnap.data();
           const currentRating = currentData.rating || 0;
           const currentReviewCount = currentData.reviewCount || 0;
-          
+
           // Calculate new average rating
           const newRating = (currentRating * currentReviewCount + storeRating) / (currentReviewCount + 1);
-          
+
           await updateDoc(storeRef, {
             rating: newRating,
             reviewCount: currentReviewCount + 1,
           });
         }
       }
-      
+
       // Move to driver rating step
       setRatingStep('driver');
     } catch (error) {
@@ -400,22 +400,22 @@ export const LiveTrackingPage: React.FC = () => {
       if (orderData.driverId) {
         const driverRef = doc(db, 'drivers', orderData.driverId);
         const driverSnap = await getDoc(driverRef);
-        
+
         if (driverSnap.exists()) {
           const currentData = driverSnap.data();
           const currentRating = currentData.rating || 0;
           const currentReviewCount = currentData.reviewCount || 0;
-          
+
           // Calculate new average rating
           const newRating = (currentRating * currentReviewCount + driverRating) / (currentReviewCount + 1);
-          
+
           await updateDoc(driverRef, {
             rating: newRating,
             reviewCount: currentReviewCount + 1,
           });
         }
       }
-      
+
       // Close modal and navigate home
       setShowRatingModal(false);
       navigate('/', { replace: true });
@@ -438,11 +438,11 @@ export const LiveTrackingPage: React.FC = () => {
 
   const toggleChip = (chip: string, type: 'store' | 'driver') => {
     if (type === 'store') {
-      setSelectedStoreChips(prev => 
+      setSelectedStoreChips(prev =>
         prev.includes(chip) ? prev.filter(c => c !== chip) : [...prev, chip]
       );
     } else {
-      setSelectedDriverChips(prev => 
+      setSelectedDriverChips(prev =>
         prev.includes(chip) ? prev.filter(c => c !== chip) : [...prev, chip]
       );
     }
@@ -786,14 +786,14 @@ export const LiveTrackingPage: React.FC = () => {
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-x-4 bottom-4 top-auto bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
-              style={{ maxHeight: '75vh' }}
+              style={{ maxHeight: '70vh' }}
             >
               {ratingStep === 'store' ? (
                 <div className="flex flex-col h-full">
                   {/* FIXED HEADER */}
                   <div className="flex-shrink-0 p-6 pb-4">
                     <p className="text-center text-gray-500 text-sm mb-4">Rate your store experience</p>
-                    
+
                     {/* Store Info */}
                     <div className="flex items-center space-x-3 pb-4 border-b border-gray-100">
                       {storeData?.logo || storeData?.image || orderData.storeImage ? (
@@ -817,7 +817,7 @@ export const LiveTrackingPage: React.FC = () => {
                       <h2 className="text-xl font-bold text-gray-900 mb-4">
                         How was your experience with the store?
                       </h2>
-                      
+
                       {/* Stars */}
                       <div className="flex justify-center space-x-2">
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -830,16 +830,15 @@ export const LiveTrackingPage: React.FC = () => {
                           >
                             <Star
                               size={40}
-                              className={`transition-colors ${
-                                star <= storeRating
+                              className={`transition-colors ${star <= storeRating
                                   ? 'fill-yellow-400 text-yellow-400'
                                   : 'text-gray-300'
-                              }`}
+                                }`}
                             />
                           </motion.button>
                         ))}
                       </div>
-                      
+
                       {/* Emoji feedback - Fixed height container to prevent layout shift */}
                       <div className="h-12 flex items-center justify-center mt-2">
                         {storeRating > 0 && (
@@ -874,11 +873,10 @@ export const LiveTrackingPage: React.FC = () => {
                         <button
                           key={chip}
                           onClick={() => toggleChip(chip, 'store')}
-                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                            selectedStoreChips.includes(chip)
+                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${selectedStoreChips.includes(chip)
                               ? 'bg-blue-500 text-white border-blue-500'
                               : 'bg-white text-gray-700 border-gray-300'
-                          }`}
+                            }`}
                         >
                           {selectedStoreChips.includes(chip) && (
                             <span className="inline-block w-2 h-2 bg-white rounded-full mr-2" />
@@ -894,11 +892,10 @@ export const LiveTrackingPage: React.FC = () => {
                     <button
                       onClick={handleStoreRatingNext}
                       disabled={storeRating === 0 || isSubmitting}
-                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
-                        storeRating === 0 || isSubmitting
+                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${storeRating === 0 || isSubmitting
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg'
-                      }`}
+                        }`}
                     >
                       {isSubmitting ? 'Submitting...' : 'Next'}
                     </button>
@@ -909,7 +906,7 @@ export const LiveTrackingPage: React.FC = () => {
                   {/* FIXED HEADER */}
                   <div className="flex-shrink-0 p-6 pb-4">
                     <p className="text-center text-gray-500 text-sm mb-4">Rate your delivery</p>
-                    
+
                     {/* Driver Info */}
                     <div className="flex items-center justify-center space-x-3 pb-4 border-b border-gray-100">
                       {driverData?.photo || driverData?.profileImage ? (
@@ -936,7 +933,7 @@ export const LiveTrackingPage: React.FC = () => {
                       <h2 className="text-xl font-bold text-gray-900 mb-4">
                         How was your delivery?
                       </h2>
-                      
+
                       {/* Stars */}
                       <div className="flex justify-center space-x-2">
                         {[1, 2, 3, 4, 5].map((star) => (
@@ -949,16 +946,15 @@ export const LiveTrackingPage: React.FC = () => {
                           >
                             <Star
                               size={40}
-                              className={`transition-colors ${
-                                star <= driverRating
+                              className={`transition-colors ${star <= driverRating
                                   ? 'fill-yellow-400 text-yellow-400'
                                   : 'text-gray-300'
-                              }`}
+                                }`}
                             />
                           </motion.button>
                         ))}
                       </div>
-                      
+
                       {/* Emoji feedback - Fixed height container to prevent layout shift */}
                       <div className="h-12 flex items-center justify-center mt-2">
                         {driverRating > 0 && (
@@ -993,11 +989,10 @@ export const LiveTrackingPage: React.FC = () => {
                         <button
                           key={chip}
                           onClick={() => toggleChip(chip, 'driver')}
-                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                            selectedDriverChips.includes(chip)
+                          className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${selectedDriverChips.includes(chip)
                               ? 'bg-gray-800 text-white border-gray-800'
                               : 'bg-white text-gray-700 border-gray-300'
-                          }`}
+                            }`}
                         >
                           {chip}
                         </button>
@@ -1010,11 +1005,10 @@ export const LiveTrackingPage: React.FC = () => {
                     <button
                       onClick={handleDriverRatingSubmit}
                       disabled={driverRating === 0 || isSubmitting}
-                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${
-                        driverRating === 0 || isSubmitting
+                      className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${driverRating === 0 || isSubmitting
                           ? 'bg-gray-300 cursor-not-allowed'
                           : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
-                      }`}
+                        }`}
                     >
                       {isSubmitting ? 'Submitting...' : 'Submit Rating'}
                     </button>
