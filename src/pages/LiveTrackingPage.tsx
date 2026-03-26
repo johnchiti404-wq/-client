@@ -786,7 +786,7 @@ export const LiveTrackingPage: React.FC = () => {
               exit={{ opacity: 0, y: 100 }}
               transition={{ type: 'spring', damping: 25, stiffness: 200 }}
               className="fixed inset-x-4 bottom-4 top-auto bg-white rounded-3xl shadow-2xl z-50 overflow-hidden"
-              style={{ maxHeight: '70vh' }}
+              style={{ maxHeight: '50vh' }}
             >
               {ratingStep === 'store' ? (
                 <div className="flex flex-col h-full">
@@ -831,8 +831,8 @@ export const LiveTrackingPage: React.FC = () => {
                             <Star
                               size={40}
                               className={`transition-colors ${star <= storeRating
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
                                 }`}
                             />
                           </motion.button>
@@ -874,8 +874,8 @@ export const LiveTrackingPage: React.FC = () => {
                           key={chip}
                           onClick={() => toggleChip(chip, 'store')}
                           className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${selectedStoreChips.includes(chip)
-                              ? 'bg-blue-500 text-white border-blue-500'
-                              : 'bg-white text-gray-700 border-gray-300'
+                            ? 'bg-blue-500 text-white border-blue-500'
+                            : 'bg-white text-gray-700 border-gray-300'
                             }`}
                         >
                           {selectedStoreChips.includes(chip) && (
@@ -893,8 +893,8 @@ export const LiveTrackingPage: React.FC = () => {
                       onClick={handleStoreRatingNext}
                       disabled={storeRating === 0 || isSubmitting}
                       className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${storeRating === 0 || isSubmitting
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg'
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 shadow-lg'
                         }`}
                     >
                       {isSubmitting ? 'Submitting...' : 'Next'}
@@ -947,8 +947,8 @@ export const LiveTrackingPage: React.FC = () => {
                             <Star
                               size={40}
                               className={`transition-colors ${star <= driverRating
-                                  ? 'fill-yellow-400 text-yellow-400'
-                                  : 'text-gray-300'
+                                ? 'fill-yellow-400 text-yellow-400'
+                                : 'text-gray-300'
                                 }`}
                             />
                           </motion.button>
@@ -990,8 +990,8 @@ export const LiveTrackingPage: React.FC = () => {
                           key={chip}
                           onClick={() => toggleChip(chip, 'driver')}
                           className={`px-4 py-2 rounded-full text-sm font-medium border transition-colors ${selectedDriverChips.includes(chip)
-                              ? 'bg-gray-800 text-white border-gray-800'
-                              : 'bg-white text-gray-700 border-gray-300'
+                            ? 'bg-gray-800 text-white border-gray-800'
+                            : 'bg-white text-gray-700 border-gray-300'
                             }`}
                         >
                           {chip}
@@ -1006,8 +1006,8 @@ export const LiveTrackingPage: React.FC = () => {
                       onClick={handleDriverRatingSubmit}
                       disabled={driverRating === 0 || isSubmitting}
                       className={`w-full py-4 rounded-full font-bold text-lg text-white transition-all ${driverRating === 0 || isSubmitting
-                          ? 'bg-gray-300 cursor-not-allowed'
-                          : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
+                        ? 'bg-gray-300 cursor-not-allowed'
+                        : 'bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 shadow-lg'
                         }`}
                     >
                       {isSubmitting ? 'Submitting...' : 'Submit Rating'}
